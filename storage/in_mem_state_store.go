@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"github.com/pkg/errors"
+	lib "github.com/kubaracek/go-auth-providers"
 	"sync"
 	"time"
 )
@@ -69,12 +69,12 @@ func (s *InMemAuthTokenStoreImpl) BurnStateToken(token string) (session, provide
 	defer s.mu.Unlock()
 	_state, ok := s.tokens[token]
 	if !ok {
-		return "", "", errors.New("auth token not found")
+		return "", "", lib.AuthTokenNotFoundError{}
 	}
 
 	if time.Now().After(_state.ttl) {
 		delete(s.tokens, token)
-		return "", "", errors.New("auth token expired")
+		return "", "", lib.AuthTokenExpiredError{}
 	}
 	delete(s.tokens, token)
 	return _state.session, _state.provider, nil

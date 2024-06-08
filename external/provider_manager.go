@@ -4,7 +4,6 @@ import (
 	"github.com/kubaracek/go-auth-providers"
 	"github.com/kubaracek/go-auth-providers/storage"
 	"github.com/markbates/goth"
-	"github.com/pkg/errors"
 	"sync"
 )
 
@@ -43,27 +42,27 @@ func NewProviderManager(stateTokenStore storage.StateTokenStore, opts ...Registe
 func (pm *ProviderManagerImpl) BeginAuth(providerName string) (string, error) {
 	provider := pm.getProvider(providerName)
 	if provider == nil {
-		return "", errors.New("provider not found")
+		return "", lib.InternalError{Message: "provider not found"}
 	}
 
 	stateToken, err := lib.RandomToken(64)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to generate state token")
+		return "", lib.InternalError{Message: "failed to generate state token"}
 	}
 
 	session, err := provider.BeginAuth(stateToken)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to begin auth")
+		return "", lib.InternalError{Message: "failed to begin auth"}
 	}
 
 	err = pm.stateTokenStore.StoreStateToken(stateToken, session.Marshal(), providerName)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to store state token")
+		return "", lib.InternalError{Message: "failed to store state token"}
 	}
 
 	authUrl, err := session.GetAuthURL()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get auth url")
+		return "", lib.InternalError{Message: "failed to get auth url"}
 	}
 
 	return authUrl, nil
@@ -73,27 +72,27 @@ func (pm *ProviderManagerImpl) CompleteAuth(stateToken string, authData lib.Para
 	var user lib.User
 	sessionData, providerName, err := pm.stateTokenStore.BurnStateToken(stateToken)
 	if err != nil {
-		return user, errors.Wrap(err, "failed to burn state token")
+		return user, lib.InternalError{Message: "failed to burn state token"}
 	}
 
 	provider := pm.getProvider(providerName)
 	if provider == nil {
-		return user, errors.New("provider not found")
+		return user, lib.InternalError{Message: "provider not found"}
 	}
 
 	session, err := provider.UnmarshalSession(sessionData)
 	if err != nil {
-		return user, errors.Wrap(err, "failed to unmarshal session")
+		return user, lib.InternalError{Message: "failed to unmarshal session"}
 	}
 
 	_, err = session.Authorize(goth.Provider(provider), authData)
 	if err != nil {
-		return user, errors.Wrap(err, "failed to authorize")
+		return user, lib.UserAuthError{Message: "failed to authorize"}
 	}
 
 	u, err := provider.FetchUser(session)
 	if err != nil {
-		return user, errors.Wrap(err, "failed to fetch user")
+		return user, lib.UserAuthError{Message: "failed to fetch user"}
 	}
 
 	user = lib.User(u)
