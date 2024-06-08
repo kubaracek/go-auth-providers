@@ -3,8 +3,8 @@ package external
 import (
 	"context"
 	"encoding/json"
-	"github.com/kubaracek/go-provider-auth"
-	"github.com/kubaracek/go-provider-auth/storage"
+	"github.com/kubaracek/go-auth-providers"
+	"github.com/kubaracek/go-auth-providers/storage"
 	"github.com/markbates/goth"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"

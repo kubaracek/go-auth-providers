@@ -1,4 +1,4 @@
-module github.com/kubaracek/go-provider-auth
+module github.com/kubaracek/go-auth-providers
 
 go 1.21.6
 
